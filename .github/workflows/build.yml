@@ -1,0 +1,58 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Version label
+        id: ver
+        run: |
+          N=${{ github.run_number }}
+          if [ "$N" = "1" ]; then V=1.0; else V=1.0.$((N-1)); fi
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Decode signing keystore
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > "$RUNNER_TEMP/keystore.jks"
+
+      - name: Build release APK
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: ${{ steps.ver.outputs.v }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk "Invoiced-v${{ steps.ver.outputs.v }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Invoiced-apk
+          path: Invoiced-*.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.v }}
+          name: Invoiced v${{ steps.ver.outputs.v }}
+          files: Invoiced-*.apk

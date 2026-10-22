@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Invoiced - You've been invoiced. Make, send and track invoices from your phone.">
+  <title>Invoiced</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0D1117"/>
+      <stop offset="1" stop-color="#111A24"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1C2230"/>
+      <stop offset="1" stop-color="#0F1319"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" fill="url(#bg)"/>
+
+  <!-- watermark stamp -->
+  <g transform="translate(1030 150) rotate(-14)" opacity="0.13">
+    <rect x="-190" y="-56" width="380" height="112" rx="18" fill="none" stroke="#3FB950" stroke-width="11"/>
+    <text x="0" y="26" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="7" fill="#3FB950">INVOICED</text>
+  </g>
+
+  <!-- logo tile -->
+  <g transform="translate(76 86)">
+    <rect x="0" y="0" width="128" height="128" rx="30" fill="url(#tile)" stroke="#30363D" stroke-width="2"/>
+    <g transform="translate(64 65) scale(0.54)">
+      <path d="M -52 -72 h68 l32 32 v112 h-100 z" fill="#E6EDF3"/>
+      <path d="M 16 -72 v32 h32 z" fill="#B1BAC4"/>
+      <rect x="-36" y="-18" width="52" height="9" rx="4.5" fill="#C9D1D9"/>
+      <rect x="-36" y="4" width="68" height="9" rx="4.5" fill="#C9D1D9"/>
+      <rect x="-36" y="26" width="40" height="9" rx="4.5" fill="#C9D1D9"/>
+      <g transform="translate(10 38) rotate(-14)">
+        <rect x="-70" y="-24" width="140" height="48" rx="10" fill="#0D1117" stroke="#3FB950" stroke-width="7"/>
+        <text x="0" y="9" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="25" font-weight="800" letter-spacing="2" fill="#3FB950">INVOICED</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- title -->
+  <text x="256" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="60" font-weight="700" fill="#E6EDF3">Invoiced</text>
+  <text x="258" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="23" font-weight="600" fill="#3FB950">You've been invoiced.</text>
+  <text x="258" y="198" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="19" fill="#8B949E">Make, send and track invoices from your phone. No account, no cloud, no tracking.</text>
+
+  <!-- badges -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600">
+    <g transform="translate(258 222)"><rect width="80" height="26" rx="13" fill="#1F6FEB"/><text x="40" y="18" text-anchor="middle" fill="#FFFFFF">Android</text></g>
+    <g transform="translate(348 222)"><rect width="60" height="26" rx="13" fill="#238636"/><text x="30" y="18" text-anchor="middle" fill="#FFFFFF">MIT</text></g>
+    <g transform="translate(418 222)"><rect width="100" height="26" rx="13" fill="#21262D" stroke="#30363D"/><text x="50" y="18" text-anchor="middle" fill="#C9D1D9">Offline only</text></g>
+    <g transform="translate(528 222)"><rect width="112" height="26" rx="13" fill="#21262D" stroke="#30363D"/><text x="56" y="18" text-anchor="middle" fill="#C9D1D9">PDF and CSV</text></g>
+  </g>
+</svg>
