@@ -16,7 +16,10 @@ import com.remvisual.invoiced.data.DiscountType
 import com.remvisual.invoiced.data.Invoice
 import com.remvisual.invoiced.data.InvoiceStatus
 import com.remvisual.invoiced.data.LineItem
+import com.remvisual.invoiced.domain.amount
 import com.remvisual.invoiced.domain.computeTotals
+import com.remvisual.invoiced.domain.lineDiscount
+import com.remvisual.invoiced.domain.lineDiscountLabel
 import com.remvisual.invoiced.domain.fmtMoney
 import com.remvisual.invoiced.domain.fmtQty
 import com.remvisual.invoiced.domain.fmtRate
@@ -219,14 +222,20 @@ object PdfGenerator {
             if (pageNo != before) tableHeader()
             val textTop = y + 6f * sc
             val descLayout = layoutOf(item.description, descW, body)
-            val rowH = maxOf(descLayout.height.toFloat(), 14f) + 12f * sc
+            val disc = item.lineDiscount
+            val discH = if (disc > 0) 13f * sc else 0f
+            val rowH = maxOf(descLayout.height.toFloat(), 14f) + discH + 12f * sc
             if (st.zebra && idx % 2 == 1) c().drawRect(M, y, right, y + rowH, fill(zebra))
             val cv = c()
             cv.save(); cv.translate(descX, textTop); descLayout.draw(cv); cv.restore()
             val base = textTop + 11f * sc
             cv.drawText(fmtQty(item.quantity), qtyR, base, bodyR)
             cv.drawText(fmtMoney(item.unitPrice), priceR, base, bodyR)
-            cv.drawText(fmtMoney(item.quantity * item.unitPrice), amountR, base, boldR)
+            cv.drawText(fmtMoney(item.amount), amountR, base, boldR)
+            if (disc > 0) {
+                val dBase = textTop + maxOf(descLayout.height.toFloat(), 14f) + 10f * sc
+                cv.drawText(lineDiscountLabel(item, cur), descX, dBase, muted)
+            }
             y += rowH
             if (!st.zebra) c().drawLine(M, y, right, y, rule)
         }

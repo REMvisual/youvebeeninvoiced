@@ -55,7 +55,10 @@ data class LineItem(
     val position: Int = 0,
     val description: String = "",
     val quantity: Double = 1.0,
-    val unitPrice: Double = 0.0
+    val unitPrice: Double = 0.0,
+    // added in db version 4: discount on this line only, shown inline on the PDF
+    val discountType: DiscountType = DiscountType.NONE,
+    val discountValue: Double = 0.0
 )
 
 data class InvoiceWithItems(

@@ -58,7 +58,7 @@ object Backup {
                     put("sentHash", i.sentHash); put("sentAt", i.sentAt ?: JSONObject.NULL)
                     put("items", JSONArray().apply {
                         iw.sortedItems.forEach { li ->
-                            put(JSONObject().apply { put("description", li.description); put("quantity", li.quantity); put("unitPrice", li.unitPrice) })
+                            put(JSONObject().apply { put("description", li.description); put("quantity", li.quantity); put("unitPrice", li.unitPrice); put("discountType", li.discountType.name); put("discountValue", li.discountValue) })
                         }
                     })
                 })
@@ -154,7 +154,7 @@ object Backup {
                 o.optJSONArray("items")?.let { la ->
                     for (j in 0 until la.length()) {
                         val li = la.getJSONObject(j)
-                        lines.add(LineItem(description = li.optString("description"), quantity = li.optDouble("quantity", 1.0), unitPrice = li.optDouble("unitPrice", 0.0)))
+                        lines.add(LineItem(description = li.optString("description"), quantity = li.optDouble("quantity", 1.0), unitPrice = li.optDouble("unitPrice", 0.0), discountType = enumOr(li.optString("discountType"), DiscountType.NONE), discountValue = li.optDouble("discountValue", 0.0)))
                     }
                 }
                 repo.save(inv, lines)

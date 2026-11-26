@@ -128,17 +128,7 @@ fun InvoiceListScreen(
                     FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) })
                 }
             }
-            val unpaid = invoices.filter { it.invoice.status != InvoiceStatus.PAID }
-            if (unpaid.isNotEmpty()) {
-                val summary = unpaid.groupBy { it.invoice.currency }
-                    .map { (cur, list) -> money(list.sumOf { computeTotals(it.invoice, it.items).total }, cur) }
-                    .joinToString("  |  ")
-                Text(
-                    "Outstanding: $summary",
-                    Modifier.padding(16.dp, 8.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            if (invoices.isNotEmpty()) MoneySummary(invoices)
             if (shown.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
@@ -171,6 +161,45 @@ fun InvoiceListScreen(
                 }
             }
         )
+    }
+}
+
+/** Per-currency sums, e.g. "$1,200.00  |  ₪300.00", or "-" when nothing. */
+private fun sumByCurrency(list: List<InvoiceWithItems>, value: (InvoiceWithItems) -> Double): String =
+    list.groupBy { it.invoice.currency }
+        .map { (cur, l) -> money(l.sumOf(value), cur) }
+        .joinToString("  |  ")
+        .ifBlank { "-" }
+
+/** Received (paid invoices, what actually landed) and owed (sent, not yet paid) kept apart. Drafts are not owed yet. */
+@Composable
+private fun MoneySummary(invoices: List<InvoiceWithItems>) {
+    val paid = invoices.filter { it.invoice.status == InvoiceStatus.PAID }
+    val owed = invoices.filter { it.invoice.status == InvoiceStatus.SENT || it.invoice.status == InvoiceStatus.UPDATED }
+    val drafts = invoices.filter { it.invoice.status == InvoiceStatus.DRAFT }
+    Row(Modifier.padding(16.dp, 8.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SummaryTile(
+            "Received", Color(0xFF2E7D32),
+            sumByCurrency(paid) { it.invoice.amountReceived ?: computeTotals(it.invoice, it.items).expectedNet },
+            "${paid.size} paid", Modifier.weight(1f)
+        )
+        SummaryTile(
+            "Owed", Color(0xFFB26A00),
+            sumByCurrency(owed) { computeTotals(it.invoice, it.items).total },
+            "${owed.size} unpaid" + if (drafts.isNotEmpty()) " · ${drafts.size} draft" + (if (drafts.size > 1) "s" else "") + " not counted" else "",
+            Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun SummaryTile(title: String, color: Color, amount: String, caption: String, modifier: Modifier) {
+    Card(modifier) {
+        Column(Modifier.padding(12.dp)) {
+            Text(title, color = color, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(amount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(caption, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Per-item discount (percent or fixed). Shown inline under the item on the PDF,
+  in the editor, and as an "Item discount" column in the CSV.
+- Separate Received and Owed totals on the invoice list. Received counts what
+  actually came in on paid invoices; Owed counts sent and updated invoices.
+  Drafts are no longer counted as outstanding.
+
 ## [1.0.0] - 2026-10-22
 
 First public release.

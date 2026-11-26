@@ -1,5 +1,6 @@
 package com.remvisual.invoiced.domain
 
+import com.remvisual.invoiced.data.DiscountType
 import com.remvisual.invoiced.data.Invoice
 import com.remvisual.invoiced.data.InvoiceStatus
 import com.remvisual.invoiced.data.LineItem
@@ -13,7 +14,11 @@ fun contentHash(inv: Invoice, items: List<LineItem>): String {
         inv.currency, inv.discountType, inv.discountValue, inv.taxEnabled, inv.taxRate,
         inv.withholdingRate, inv.showWithholdingOnPdf, inv.notes
     ).forEach { sb.append(it).append('|') }
-    for (it in items) sb.append("||").append(it.description).append('|').append(it.quantity).append('|').append(it.unitPrice)
+    for (it in items) {
+        sb.append("||").append(it.description).append('|').append(it.quantity).append('|').append(it.unitPrice)
+        // Only when set, so invoices sent before line discounts existed keep their hash.
+        if (it.discountType != DiscountType.NONE && it.discountValue != 0.0) sb.append('|').append(it.discountType).append('|').append(it.discountValue)
+    }
     val digest = MessageDigest.getInstance("SHA-1").digest(sb.toString().toByteArray())
     return digest.joinToString("") { b -> "%02x".format(b) }
 }

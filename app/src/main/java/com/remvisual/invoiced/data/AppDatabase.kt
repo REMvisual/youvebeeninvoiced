@@ -5,13 +5,20 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Invoice::class, LineItem::class, Client::class, SavedItem::class], version = 3, exportSchema = false)
+@Database(entities = [Invoice::class, LineItem::class, Client::class, SavedItem::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceDao(): InvoiceDao
     abstract fun clientDao(): ClientDao
     abstract fun savedItemDao(): SavedItemDao
 
     companion object {
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE line_items ADD COLUMN discountType TEXT NOT NULL DEFAULT 'NONE'")
+                db.execSQL("ALTER TABLE line_items ADD COLUMN discountValue REAL NOT NULL DEFAULT 0.0")
+            }
+        }
+
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

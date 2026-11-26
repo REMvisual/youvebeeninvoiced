@@ -3,8 +3,10 @@ package com.remvisual.invoiced.export
 import android.content.Context
 import com.remvisual.invoiced.data.InvoiceWithItems
 import com.remvisual.invoiced.data.sortedItems
+import com.remvisual.invoiced.domain.amount
 import com.remvisual.invoiced.domain.computeTotals
 import com.remvisual.invoiced.domain.isoDate
+import com.remvisual.invoiced.domain.lineDiscount
 import com.remvisual.invoiced.domain.recipientsDisplay
 import java.io.File
 import java.time.LocalDate
@@ -28,7 +30,7 @@ object CsvExporter {
             )
         )
         val items = StringBuilder("﻿")
-        items.appendLine(row("Invoice number", "Client", "Issue date", "Currency", "Description", "Qty", "Unit price", "Amount"))
+        items.appendLine(row("Invoice number", "Client", "Issue date", "Currency", "Description", "Qty", "Unit price", "Item discount", "Amount"))
 
         for (iw in all) {
             val i = iw.invoice
@@ -47,7 +49,7 @@ object CsvExporter {
                 items.appendLine(
                     row(
                         i.number, i.clientName, isoDate(i.issueDate), i.currency,
-                        li.description, num(li.quantity), num(li.unitPrice), num(li.quantity * li.unitPrice)
+                        li.description, num(li.quantity), num(li.unitPrice), num(li.lineDiscount), num(li.amount)
                     )
                 )
             }

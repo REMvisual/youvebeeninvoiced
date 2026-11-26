@@ -75,7 +75,9 @@ import com.remvisual.invoiced.data.sortedItems
 import com.remvisual.invoiced.domain.Totals
 import com.remvisual.invoiced.domain.afterEdit
 import com.remvisual.invoiced.domain.afterSend
+import com.remvisual.invoiced.domain.amount
 import com.remvisual.invoiced.domain.computeTotals
+import com.remvisual.invoiced.domain.lineDiscount
 import com.remvisual.invoiced.domain.contentHash
 import com.remvisual.invoiced.domain.fmtPlain
 import com.remvisual.invoiced.domain.fmtRate
@@ -104,16 +106,18 @@ data class ItemDraft(
     val uid: Long,
     val description: String = "",
     val qty: String = "1",
-    val price: String = ""
+    val price: String = "",
+    val discType: DiscountType = DiscountType.NONE,
+    val disc: String = ""
 )
 
 private fun ItemDraft.toLineItem() = LineItem(
     description = description.trim(),
     quantity = parseNumOrNull(qty) ?: 1.0,
-    unitPrice = parseNum(price)
+    unitPrice = parseNum(price),
+    discountType = if (parseNum(disc) == 0.0) DiscountType.NONE else discType,
+    discountValue = if (discType == DiscountType.NONE) 0.0 else parseNum(disc)
 )
-
-private fun ItemDraft.amount(): Double = (parseNumOrNull(qty) ?: 1.0) * parseNum(price)
 
 private fun sentAtText(millis: Long?): String =
     millis?.let { DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm").format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())) } ?: ""
@@ -162,7 +166,7 @@ fun InvoiceEditScreen(repo: Repository, invoiceId: Long?, onDone: () -> Unit) {
             inv = iw.invoice
             items.clear()
             for (li in iw.sortedItems) {
-                items.add(ItemDraft(nextUid++, li.description, fmtPlain(li.quantity).ifBlank { "0" }, fmtPlain(li.unitPrice)))
+                items.add(ItemDraft(nextUid++, li.description, fmtPlain(li.quantity).ifBlank { "0" }, fmtPlain(li.unitPrice), li.discountType, fmtPlain(li.discountValue)))
             }
         }
         discountText = fmtPlain(inv.discountValue)
@@ -623,10 +627,23 @@ private fun ItemRow(item: ItemDraft, currency: String, index: Int, savedItems: L
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumberField("Qty", item.qty, { onChange(item.copy(qty = it)) }, Modifier.weight(0.8f))
             NumberField("Unit price", item.price, { onChange(item.copy(price = it)) }, Modifier.weight(1.2f))
-            Text(
-                money(item.amount(), currency),
-                Modifier.weight(1.1f), textAlign = TextAlign.End,
-                style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
+            val li = item.toLineItem()
+            Column(Modifier.weight(1.1f), horizontalAlignment = Alignment.End) {
+                Text(money(li.amount, currency), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                if (li.lineDiscount > 0) Text("-" + money(li.lineDiscount, currency), style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Item discount", style = MaterialTheme.typography.labelMedium)
+            FilterChip(selected = item.discType == DiscountType.NONE, onClick = { onChange(item.copy(discType = DiscountType.NONE, disc = "")) }, label = { Text("None") })
+            FilterChip(selected = item.discType == DiscountType.PERCENT, onClick = { onChange(item.copy(discType = DiscountType.PERCENT)) }, label = { Text("%") })
+            FilterChip(selected = item.discType == DiscountType.FIXED, onClick = { onChange(item.copy(discType = DiscountType.FIXED)) }, label = { Text(symbol(currency).trim()) })
+        }
+        if (item.discType != DiscountType.NONE) {
+            NumberField(
+                if (item.discType == DiscountType.PERCENT) "Discount %" else "Discount amount",
+                item.disc, { onChange(item.copy(disc = it)) }, Modifier.fillMaxWidth(),
+                suffix = if (item.discType == DiscountType.PERCENT) "%" else symbol(currency).trim()
             )
         }
         HorizontalDivider()

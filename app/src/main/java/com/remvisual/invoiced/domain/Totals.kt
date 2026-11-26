@@ -16,8 +16,28 @@ data class Totals(
     val expectedNet: Double
 )
 
+/** Qty x unit price, before this line's own discount. */
+val LineItem.gross: Double get() = quantity * unitPrice
+
+/** This line's own discount, never more than the line itself. */
+val LineItem.lineDiscount: Double get() {
+    val raw = when (discountType) {
+        DiscountType.NONE -> 0.0
+        DiscountType.PERCENT -> gross * discountValue / 100.0
+        DiscountType.FIXED -> discountValue
+    }
+    return raw.coerceIn(0.0, maxOf(gross, 0.0))
+}
+
+/** What the line contributes to the subtotal. */
+val LineItem.amount: Double get() = gross - lineDiscount
+
+fun lineDiscountLabel(li: LineItem, currency: String): String =
+    if (li.discountType == DiscountType.PERCENT) "Discount ${fmtRate(li.discountValue)}% (-${money(li.lineDiscount, currency)})"
+    else "Discount -${money(li.lineDiscount, currency)}"
+
 fun computeTotals(invoice: Invoice, items: List<LineItem>): Totals {
-    val subtotal = items.sumOf { it.quantity * it.unitPrice }
+    val subtotal = items.sumOf { it.amount }
     val rawDiscount = when (invoice.discountType) {
         DiscountType.NONE -> 0.0
         DiscountType.PERCENT -> subtotal * invoice.discountValue / 100.0
