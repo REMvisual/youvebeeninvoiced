@@ -4,6 +4,7 @@ package com.remvisual.invoiced.ui
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -120,19 +120,13 @@ fun InvoiceListScreen(
                     )
                 }
             }
-            Row(
-                Modifier.padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ListFilter.entries.forEach { f ->
-                    FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) })
-                }
+            if (invoices.isNotEmpty()) {
+                MoneySummary(invoices, filter) { f -> filter = if (filter == f) ListFilter.ALL else f }
             }
-            if (invoices.isNotEmpty()) MoneySummary(invoices)
             if (shown.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (invoices.isEmpty()) "No invoices yet.\nTap New invoice to create one." else "Nothing here.",
+                        if (invoices.isEmpty()) "No invoices yet.\nTap New invoice to create one." else "Nothing here. Tap the tile again to show all.",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -171,32 +165,40 @@ private fun sumByCurrency(list: List<InvoiceWithItems>, value: (InvoiceWithItems
         .joinToString("  |  ")
         .ifBlank { "-" }
 
-/** Received (paid invoices, what actually landed) and owed (sent, not yet paid) kept apart. Drafts are not owed yet. */
+/**
+ * The Paid / Unpaid tiles are the list filter: tap one to show only those, tap it again for all.
+ * Paid sums what actually came in. Unpaid lists drafts too, but only sums sent/updated ones (drafts aren't owed yet).
+ */
 @Composable
-private fun MoneySummary(invoices: List<InvoiceWithItems>) {
+private fun MoneySummary(invoices: List<InvoiceWithItems>, filter: ListFilter, onTap: (ListFilter) -> Unit) {
     val paid = invoices.filter { it.invoice.status == InvoiceStatus.PAID }
-    val owed = invoices.filter { it.invoice.status == InvoiceStatus.SENT || it.invoice.status == InvoiceStatus.UPDATED }
-    val drafts = invoices.filter { it.invoice.status == InvoiceStatus.DRAFT }
+    val unpaid = invoices.filter { it.invoice.status != InvoiceStatus.PAID }
+    val owed = unpaid.filter { it.invoice.status != InvoiceStatus.DRAFT }
+    val drafts = unpaid.size - owed.size
     Row(Modifier.padding(16.dp, 8.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         SummaryTile(
-            "Received", Color(0xFF2E7D32),
+            "Paid", Color(0xFF2E7D32),
             sumByCurrency(paid) { it.invoice.amountReceived ?: computeTotals(it.invoice, it.items).expectedNet },
-            "${paid.size} paid", Modifier.weight(1f)
+            "${paid.size} received",
+            selected = filter == ListFilter.PAID, onClick = { onTap(ListFilter.PAID) }, modifier = Modifier.weight(1f)
         )
         SummaryTile(
-            "Owed", Color(0xFFB26A00),
+            "Unpaid", Color(0xFFB26A00),
             sumByCurrency(owed) { computeTotals(it.invoice, it.items).total },
-            "${owed.size} unpaid" + if (drafts.isNotEmpty()) " · ${drafts.size} draft" + (if (drafts.size > 1) "s" else "") + " not counted" else "",
-            Modifier.weight(1f)
+            "${owed.size} owed" + if (drafts > 0) " · $drafts draft" + (if (drafts > 1) "s" else "") + " not counted" else "",
+            selected = filter == ListFilter.UNPAID, onClick = { onTap(ListFilter.UNPAID) }, modifier = Modifier.weight(1f)
         )
     }
 }
 
 @Composable
-private fun SummaryTile(title: String, color: Color, amount: String, caption: String, modifier: Modifier) {
-    Card(modifier) {
+private fun SummaryTile(title: String, color: Color, amount: String, caption: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+    Card(
+        onClick = onClick, modifier = modifier,
+        border = if (selected) BorderStroke(2.dp, color) else null
+    ) {
         Column(Modifier.padding(12.dp)) {
-            Text(title, color = color, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(title + if (selected) "  ·  showing" else "", color = color, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             Text(amount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(caption, style = MaterialTheme.typography.bodySmall)
         }

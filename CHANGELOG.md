@@ -5,14 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.2] - 2026-11-26
+
+### Changed
+- "Per-item discounts" checkbox at the top of Items hides the per-item discount
+  controls until you need them. Unticking clears any per-item discounts.
+- The Paid and Unpaid tiles are now the list filter (tap to filter, tap again
+  for all), replacing the separate All / Unpaid / Paid chips.
+
+## [1.0.1] - 2026-11-26
 
 ### Added
 - Per-item discount (percent or fixed). Shown inline under the item on the PDF,
   in the editor, and as an "Item discount" column in the CSV.
-- Separate Received and Owed totals on the invoice list. Received counts what
-  actually came in on paid invoices; Owed counts sent and updated invoices.
-  Drafts are no longer counted as outstanding.
+- Separate paid and owed totals on the invoice list. Paid counts what actually
+  came in; owed counts sent and updated invoices. Drafts are not counted.
 
 ## [1.0.0] - 2026-10-22
 

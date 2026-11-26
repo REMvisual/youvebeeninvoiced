@@ -30,6 +30,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -463,6 +464,8 @@ private fun EditBody(
     var showClient by remember { mutableStateOf(!startCollapsed) }
     var showInvoice by remember { mutableStateOf(!startCollapsed) }
     var showNotes by remember { mutableStateOf(!startCollapsed) }
+    // Per-item discount controls stay hidden until ticked; on by default only if an item already has one.
+    var perItemDiscounts by remember { mutableStateOf(items.any { it.discType != DiscountType.NONE }) }
 
     val clientSummary = listOf(inv.clientName.ifBlank { "No client yet" }, recipientsDisplay(inv.clientEmail)).filter { it.isNotBlank() }.joinToString("  -  ")
     CollapsibleCard("Client", clientSummary, showClient, { showClient = !showClient }) {
@@ -501,10 +504,22 @@ private fun EditBody(
     }
 
     SectionCard("Items") {
+        // Unticking clears them, so nothing hidden still changes the totals.
+        fun setPerItem(on: Boolean) {
+            perItemDiscounts = on
+            if (!on) items.indices.forEach { i -> items[i] = items[i].copy(discType = DiscountType.NONE, disc = "") }
+        }
+        Row(
+            Modifier.fillMaxWidth().clickable { setPerItem(!perItemDiscounts) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = perItemDiscounts, onCheckedChange = { setPerItem(it) })
+            Text("Per-item discounts", style = MaterialTheme.typography.bodyMedium)
+        }
         items.forEachIndexed { idx, item ->
             key(item.uid) {
                 ItemRow(
-                    item = item, currency = cur, index = idx + 1, savedItems = savedItems,
+                    item = item, currency = cur, index = idx + 1, savedItems = savedItems, showDiscount = perItemDiscounts,
                     onChange = { items[idx] = it },
                     onDelete = { items.removeAt(idx) }
                 )
@@ -592,7 +607,7 @@ private fun AdjustmentsCard(
 }
 
 @Composable
-private fun ItemRow(item: ItemDraft, currency: String, index: Int, savedItems: List<SavedItem>, onChange: (ItemDraft) -> Unit, onDelete: () -> Unit) {
+private fun ItemRow(item: ItemDraft, currency: String, index: Int, savedItems: List<SavedItem>, showDiscount: Boolean, onChange: (ItemDraft) -> Unit, onDelete: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     val matches = remember(item.description, savedItems) {
         val q = item.description.trim()
@@ -633,13 +648,13 @@ private fun ItemRow(item: ItemDraft, currency: String, index: Int, savedItems: L
                 if (li.lineDiscount > 0) Text("-" + money(li.lineDiscount, currency), style = MaterialTheme.typography.bodySmall)
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (showDiscount) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Item discount", style = MaterialTheme.typography.labelMedium)
             FilterChip(selected = item.discType == DiscountType.NONE, onClick = { onChange(item.copy(discType = DiscountType.NONE, disc = "")) }, label = { Text("None") })
             FilterChip(selected = item.discType == DiscountType.PERCENT, onClick = { onChange(item.copy(discType = DiscountType.PERCENT)) }, label = { Text("%") })
             FilterChip(selected = item.discType == DiscountType.FIXED, onClick = { onChange(item.copy(discType = DiscountType.FIXED)) }, label = { Text(symbol(currency).trim()) })
         }
-        if (item.discType != DiscountType.NONE) {
+        if (showDiscount && item.discType != DiscountType.NONE) {
             NumberField(
                 if (item.discType == DiscountType.PERCENT) "Discount %" else "Discount amount",
                 item.disc, { onChange(item.copy(disc = it)) }, Modifier.fillMaxWidth(),
